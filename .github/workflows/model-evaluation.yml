@@ -1,0 +1,24 @@
+name: Live model evaluation
+on:
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet build EmployeeQuery.sln -c Release
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Evaluate versioned semantic golden set
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python tests/live_model_evaluation.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-evaluation
+          path: artifacts/evaluations/model-evaluation-latest.json

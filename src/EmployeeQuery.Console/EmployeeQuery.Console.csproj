@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EmployeeQuery.Application\EmployeeQuery.Application.csproj" />
+    <ProjectReference Include="..\EmployeeQuery.Infrastructure\EmployeeQuery.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\data\employees.db" Link="data\employees.db" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\NL2SQL_TEST_CASES.csv" Link="config\query-catalog.csv" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

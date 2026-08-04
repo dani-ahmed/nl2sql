@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <NuGetAudit>false</NuGetAudit>
+    <BuildSlot Condition="'$(MSBuildProjectName)' == 'EmployeeQuery.Application'">a</BuildSlot>
+    <BuildSlot Condition="'$(MSBuildProjectName)' == 'EmployeeQuery.Infrastructure'">b</BuildSlot>
+    <BuildSlot Condition="'$(MSBuildProjectName)' == 'EmployeeQuery.Console'">c</BuildSlot>
+    <BuildSlot Condition="'$(MSBuildProjectName)' == 'EmployeeQuery.UnitTests'">d</BuildSlot>
+    <BuildSlot Condition="'$(MSBuildProjectName)' == 'EmployeeQuery.IntegrationTests'">e</BuildSlot>
+    <EmployeeQueryArtifactsRoot Condition="'$(EmployeeQueryArtifactsRoot)' == ''">$(MSBuildThisFileDirectory)scratchdir</EmployeeQueryArtifactsRoot>
+    <BaseIntermediateOutputPath>$(EmployeeQueryArtifactsRoot)\obj\$(BuildSlot)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(EmployeeQueryArtifactsRoot)\bin\$(BuildSlot)\</BaseOutputPath>
+  </PropertyGroup>
+</Project>
