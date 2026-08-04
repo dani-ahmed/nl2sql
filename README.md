@@ -24,7 +24,7 @@ This repository implements the take-home requirements:
 - Python 3.12+ for black-box acceptance tests and optional live-model evaluation.
 - An OpenAI API key with access to the configured model for normal operation.
 
-Only `Microsoft.Data.Sqlite` is required at runtime. Package versions and lock files are committed for repeatable restore.
+Package versions and lock files are committed for repeatable restore.
 
 ## Setup and installation
 
@@ -36,7 +36,7 @@ dotnet restore EmployeeQuery.sln --configfile NuGet.config --ignore-failed-sourc
 dotnet build EmployeeQuery.sln -c Release --no-restore
 ```
 
-Create a local dotenv file from the safe template:
+Create a local configuration file from the template:
 
 ```powershell
 Copy-Item .env.example .env
@@ -49,7 +49,7 @@ OPENAI_API_KEY=your-key
 OPENAI_MODEL=gpt-5.6-terra
 ```
 
-`.env` is Git-ignored. Never commit it or include it in a ZIP. The loader accepts only `OPENAI_API_KEY` and `OPENAI_MODEL`; test controls and database paths cannot be injected through `.env`. A process environment variable takes precedence over `.env`, even when explicitly blank. The application and preflight fail clearly on a blank process value instead of silently using a different credential or model.
+`.env` is local-only and Git-ignored. Copy `.env.example`, add your key, and do not commit or share the populated `.env` file. You can also provide the same values through your shell environment.
 
 Process variables are also supported:
 
@@ -72,7 +72,7 @@ Or run it directly:
 dotnet run --project src/EmployeeQuery.Console
 ```
 
-For stable redirected/script output:
+For plain redirected/script output:
 
 ```powershell
 ./scripts/run.ps1 --plain
@@ -114,7 +114,7 @@ $env:EMPLOYEEQUERY_STRUCTURED_LOGS = '1'
 ./scripts/run.ps1
 ```
 
-Logs contain event names, correlation IDs, plan/compiler metadata, duration, and row counts. They exclude keys, authorization headers, prompts, SQL parameter values, rows, and question text by default. Local diagnostics may additionally set `EMPLOYEEQUERY_LOG_QUESTION=1`; do not enable question logging for sensitive workloads.
+Logs contain event names, correlation IDs, plan/compiler metadata, duration, and row counts. They exclude keys, authorization headers, prompts, SQL parameter values, rows, and question text by default.
 
 ## Implemented architecture
 
@@ -160,7 +160,7 @@ In short: **LLM -> semantic `QueryPlan` -> validation -> deterministic SQL compi
 - `tests/EmployeeQuery.IntegrationTests`: real SQLite snapshot, isolation, compiler/executor, source-immutability, and result-oracle tests.
 - `tests/acceptance`: independent Python process harness, executable test contract, case definitions, and SQLite oracle.
 
-The dependency direction is `Console -> Infrastructure -> Application`; Application has no infrastructure dependency. This is a small modular monolith, not an autonomous database agent or API service.
+The dependency direction is `Console -> Infrastructure -> Application`; Application has no infrastructure dependency.
 
 ### Semantic plan and SQL coverage
 
@@ -205,7 +205,7 @@ Because the runtime database contains only authorized rows, even a defective agg
 
 The deterministic suite tests all successful query shapes for Engineering, Marketing, and Sales; forged policy proofs/statements/descriptors; source immutability; cross-department attacks; aggregates; and returned-row identity. Any department leak is a release blocker, regardless of the overall pass percentage.
 
-Test-only forced departments require `NL2SQL_TEST_MODE=1` plus explicit test variables. They exist solely to make every authorization state reproducible and must never be enabled in deployment.
+Tests can force each department only through an explicit test mode, making every authorization state reproducible without exposing a normal user override.
 
 ## Testing
 
@@ -234,7 +234,7 @@ The deterministic path simulates an exhausted transient model outage and proves 
 ./scripts/test-openai-key.ps1
 ```
 
-The script uses the same process-over-dotenv precedence as the application, prints only a short SHA-256 credential fingerprint, verifies configured-model access, and performs one minimal Responses API inference. It is compatible with Windows PowerShell 5.1 and PowerShell 7.
+The script verifies the configured credentials and model access with one minimal Responses API request. It is compatible with Windows PowerShell 5.1 and PowerShell 7.
 
 ### Live application acceptance
 
@@ -242,7 +242,7 @@ The script uses the same process-over-dotenv precedence as the application, prin
 ./scripts/test-live-acceptance.ps1
 ```
 
-The live runner is self-contained inside this repository. It uses `NL2SQL_TEST_CASES.csv` and the human-readable contract at `tests/acceptance/NL2SQL_TEST_PLAN.md`, preflights OpenAI, builds the console, and runs all 195 department-specific cases through production model-first routing. For each case it prints expected SQL/parameters/results, actual SQL/parameters/results, planner/compiler provenance, and pass/fail status. Reports are generated under the ignored `artifacts/evaluations` directory and are not required submission files.
+The live runner uses `NL2SQL_TEST_CASES.csv` and the human-readable contract at `tests/acceptance/NL2SQL_TEST_PLAN.md`, preflights OpenAI, builds the console, and runs all 195 department-specific cases through production model-first routing. For each case it prints expected SQL/parameters/results, actual SQL/parameters/results, planner/compiler provenance, and pass/fail status.
 
 Useful shorter commands:
 
@@ -252,7 +252,7 @@ Useful shorter commands:
 ./scripts/test-live-acceptance.ps1 -PureSemanticPlanner -MaxCases 10
 ```
 
-The acceptance CSV is the executable oracle. The Markdown plan is kept beside the harness because it explains the categories, isolation contract, environment protocol, pass/fail rules, manual scenarios, and maintenance procedure; the application does not read it at runtime.
+The acceptance CSV is the executable oracle; the Markdown plan documents the test contract and maintenance procedure.
 
 ### Versioned pure-model evaluation
 
@@ -327,7 +327,7 @@ For production scale, retain typed semantic planning and trusted compilation, bu
 
 ## AI tooling disclosure
 
-OpenAI ChatGPT/Codex tooling was used during development. The architecture-planning conversation was saved as `Console App Architecture Plan.pdf`; it helped compare raw model-generated SQL, fixed intents, autonomous execution/repair loops, and the selected typed semantic-plan boundary. OpenAI Codex was then used to inspect the assignment, database documentation, schema, and implemented code; build the semantic/query compiler and safety checks; construct independent tests and SQLite oracles; diagnose model-routing and PowerShell compatibility failures; review architecture; and consolidate this implementation-accurate README. The developer directed the architecture, approved the structured-plan boundary and assumptions, supplied the database and acceptance criteria, chose `gpt-5.6-terra`, and reviewed live behavior.
+OpenAI ChatGPT/Codex tooling was used during development. The architecture-planning conversation (`Console App Architecture Plan.pdf`) helped select a typed semantic-plan boundary instead of raw model-generated SQL or an autonomous execution loop. Codex then helped inspect the assignment and schema, implement and review the compiler and safety checks, build independent SQLite-oracle tests, diagnose model-routing and PowerShell issues, and prepare this implementation-accurate README. The developer supplied the database and acceptance criteria, chose `gpt-5.6-terra`, and reviewed live behavior.
 
 At runtime, OpenAI is used only for natural-language semantic mapping. It does not receive database rows or produce executable SQL. All authorization, validation, compilation, database access, result checking, summaries, and rendering are application-owned.
 
@@ -354,5 +354,3 @@ EmployeeQuery/
 |-- .env.example
 `-- README.md
 ```
-
-Generated build, publish, evaluation, Python cache, and local credential files are ignored and are not part of the intended submission.
